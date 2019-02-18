@@ -15,6 +15,7 @@
 package googlemessaging
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -125,7 +126,7 @@ func TestHttpClientSend(t *testing.T) {
 	}
 	httpClient := &http.Client{Transport: transport}
 	c := &httpGcmClient{server.URL, httpClient, "0"}
-	response, error := c.send("apiKey", *singleTargetMessage)
+	response, error := c.send(context.Background(), "apiKey", *singleTargetMessage)
 	expectedAuthHeader := "key=apiKey"
 	expResp := &HttpResponse{}
 	err := json.Unmarshal([]byte(expectedResp), &expResp)
@@ -149,7 +150,7 @@ func TestSendHttp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
-	response, err := sendHttp("apiKey", *multipleTargetMessage, c, b)
+	response, err := sendHttp(context.Background(), "apiKey", *multipleTargetMessage, c, b)
 	assertDeepEqual(t, err, nil)
 	assertDeepEqual(t, response, expResp)
 }

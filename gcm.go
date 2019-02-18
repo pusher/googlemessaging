@@ -17,6 +17,7 @@ package googlemessaging
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -125,7 +126,7 @@ type Notification struct {
 
 // httpClient is an interface to stub the http client in tests.
 type httpClient interface {
-	send(apiKey string, m HttpMessage) (*HttpResponse, error)
+	send(ctx context.Context, apiKey string, m HttpMessage) (*HttpResponse, error)
 	getRetryAfter() string
 }
 
@@ -137,7 +138,7 @@ type httpGcmClient struct {
 }
 
 // httpGcmClient implementation to send a message through GCM Http server.
-func (c *httpGcmClient) send(apiKey string, m HttpMessage) (*HttpResponse, error) {
+func (c *httpGcmClient) send(ctx context.Context, apiKey string, m HttpMessage) (*HttpResponse, error) {
 	bs, err := json.Marshal(m)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling message>%v", err)
@@ -149,7 +150,7 @@ func (c *httpGcmClient) send(apiKey string, m HttpMessage) (*HttpResponse, error
 	}
 	req.Header.Add(http.CanonicalHeaderKey("Content-Type"), "application/json")
 	req.Header.Add(http.CanonicalHeaderKey("Authorization"), authHeader(apiKey))
-	httpResp, err := c.HttpClient.Do(req)
+	httpResp, err := c.HttpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("error sending request to HTTP connection server>%v", err)
 	}
@@ -228,14 +229,14 @@ func (eb exponentialBackoff) wait() {
 }
 
 // Send a message using the HTTP GCM connection server.
-func SendHttp(platform Platform, apiKey string, m HttpMessage) (*HttpResponse, error) {
+func SendHttp(ctx context.Context, platform Platform, apiKey string, m HttpMessage) (*HttpResponse, error) {
 	c := &httpGcmClient{string(platform), &http.Client{}, "0"}
 	b := newExponentialBackoff()
-	return sendHttp(apiKey, m, c, b)
+	return sendHttp(ctx, apiKey, m, c, b)
 }
 
 // sendHttp sends an http message using exponential backoff, handling multicast replies.
-func sendHttp(apiKey string, m HttpMessage, c httpClient, b backoffProvider) (*HttpResponse, error) {
+func sendHttp(ctx context.Context, apiKey string, m HttpMessage, c httpClient, b backoffProvider) (*HttpResponse, error) {
 	// TODO(silvano): check this with responses for topic/notification group
 	gcmResp := &HttpResponse{}
 	var multicastId int
@@ -248,7 +249,7 @@ func sendHttp(apiKey string, m HttpMessage, c httpClient, b backoffProvider) (*H
 	copy(localTo, targets)
 	resultsState := &multicastResultsState{}
 	for b.sendAnother() {
-		gcmResp, err = c.send(apiKey, m)
+		gcmResp, err = c.send(ctx, apiKey, m)
 		if err != nil {
 			return gcmResp, fmt.Errorf("error sending request to GCM HTTP server: %v", err)
 		}
