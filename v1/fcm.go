@@ -82,17 +82,14 @@ func (c *fcmClient) Send(m FcmMessageBody) (*FcmSendHttpResponse, error) {
 	responseBody, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
-	fcmResp := &FcmSendHttpResponse{
-		Status: resp.StatusCode,
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("could not send a message as the server returned: %s", resp.StatusCode)
 	}
 
-	if fcmResp.Status != http.StatusOK {
-		return fcmResp, nil
-	}
-
+	fcmResp := &FcmSendHttpResponse{}
 	err = json.Unmarshal(responseBody, &fcmResp)
 	if err != nil {
-		return fcmResp, fmt.Errorf("error unmarshaling json from body: %v", err)
+		return nil, fmt.Errorf("error unmarshaling json from body: %v", err)
 	}
 
 	return fcmResp, nil
