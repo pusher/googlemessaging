@@ -40,5 +40,6 @@ type FcmAndroidNotification struct {
 type FcmData map[string]map[string]interface{}
 
 type FcmSendHttpResponse struct {
-	Name string `json:"name"`
+	Status int    `json:"-"`
+	Name   string `json:"name"`
 }
