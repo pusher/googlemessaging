@@ -10,12 +10,6 @@ const (
 	ServiceAccountFilePath = "fixtures/service_account.json"
 )
 
-func assertEqual(t *testing.T, v, e interface{}) {
-	if v != e {
-		t.Fatalf("%#v != %#v", v, e)
-	}
-}
-
 func readFixture(path string) string {
 	data, err := os.ReadFile(path)
 	if err != nil {
