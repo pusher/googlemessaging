@@ -94,3 +94,12 @@ func (c *fcmClient) Send(m FcmMessageBody) (*FcmSendHttpResponse, error) {
 
 	return fcmResp, nil
 }
+
+func SendPush(ctx context.Context, serviceAccountConfig string, m FcmMessageBody) (*FcmSendHttpResponse, error) {
+	c, err := NewFcmClient(serviceAccountConfig, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.Send(m)
+}
