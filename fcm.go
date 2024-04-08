@@ -14,6 +14,7 @@ import (
 
 const (
 	BaseURL              = "https://fcm.googleapis.com/v1"
+	InstanceIdApiUrl     = "https://iid.googleapis.com/iid/info"
 	FirebaseRequestScope = "https://www.googleapis.com/auth/firebase.messaging"
 	DefaultContentType   = "application/json"
 )
@@ -64,6 +65,40 @@ func NewFcmClient(serviceAccountFileContent string, ctx context.Context) (*fcmCl
 	}, nil
 }
 
+func (c *fcmClient) GetInstanceInfo(token string) (*InstanceInformationResponse, error) {
+	getSenderIdUrl := fmt.Sprintf("%s/%s", InstanceIdApiUrl, token)
+
+	response, err := c.httpClient.Get(getSenderIdUrl)
+	if err != nil {
+		return nil, fmt.Errorf("error making a http request to %s > %v", getSenderIdUrl, err)
+	}
+	defer response.Body.Close()
+
+	switch response.StatusCode {
+	case 401, 403:
+		return nil, fmt.Errorf("invalid FCM Service Account File")
+	case 404:
+		return nil, fmt.Errorf("device not found")
+	}
+
+	if response.StatusCode > 299 {
+		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+	}
+
+	responseBodyBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return &InstanceInformationResponse{}, fmt.Errorf("failed to read response body > %v", err)
+	}
+
+	responseBody := &InstanceInformationResponse{}
+	err = json.Unmarshal(responseBodyBytes, &responseBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return responseBody, nil
+}
+
 func (c *fcmClient) Send(m FcmMessageBody) (*FcmSendHttpResponse, error) {
 	sendURL := fmt.Sprintf("%s/projects/%s/messages:send",
 		BaseURL, c.ServiceAccountConfig.ProjectId,
@@ -71,7 +106,7 @@ func (c *fcmClient) Send(m FcmMessageBody) (*FcmSendHttpResponse, error) {
 
 	body, err := json.Marshal(m)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling message>%v", err)
+		return nil, fmt.Errorf("error marshaling message>%v", err)
 	}
 
 	resp, err := c.httpClient.Post(sendURL, DefaultContentType, bytes.NewReader(body))
@@ -79,12 +114,16 @@ func (c *fcmClient) Send(m FcmMessageBody) (*FcmSendHttpResponse, error) {
 		return nil, fmt.Errorf("error sending request to HTTP connection server>%v", err)
 	}
 
-	fcmResp := &FcmSendHttpResponse{Status: resp.StatusCode}
-	responseBody, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
+	fcmResp := &FcmSendHttpResponse{Status: resp.StatusCode}
+	responseBody, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body > %v", err)
+	}
 
 	if fcmResp.Status != http.StatusOK {
-		return fcmResp, fmt.Errorf("could not send a message as the server returned: %s", resp.StatusCode)
+		return fcmResp, fmt.Errorf("could not send a message as the server returned: %d", resp.StatusCode)
 	}
 
 	err = json.Unmarshal(responseBody, &fcmResp)

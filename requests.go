@@ -43,3 +43,7 @@ type FcmSendHttpResponse struct {
 	Status int    `json:"-"`
 	Name   string `json:"name"`
 }
+
+type InstanceInformationResponse struct {
+	AuthorizedEntity string `json:"authorizedEntity"`
+}
