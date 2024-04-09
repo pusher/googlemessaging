@@ -65,12 +65,19 @@ func NewFcmClient(serviceAccountFileContent string, ctx context.Context) (*fcmCl
 	}, nil
 }
 
+// GetInstanceInfo returns app instance info. Reference: https://developers.google.com/instance-id/reference/server
 func (c *fcmClient) GetInstanceInfo(token string) (*InstanceInformationResponse, error) {
-	getSenderIdUrl := fmt.Sprintf("%s/%s", InstanceIdApiUrl, token)
+	instanceInfoUrl := fmt.Sprintf("%s/%s", InstanceIdApiUrl, token)
 
-	response, err := c.httpClient.Get(getSenderIdUrl)
+	request, err := http.NewRequest(http.MethodGet, instanceInfoUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error making a http request to %s > %v", getSenderIdUrl, err)
+		return nil, fmt.Errorf("error build http request to %s", instanceInfoUrl)
+	}
+
+	request.Header.Set("access_token_auth", "true")
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("error making a http request to %s > %v", instanceInfoUrl, err)
 	}
 	defer response.Body.Close()
 
