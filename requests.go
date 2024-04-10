@@ -18,7 +18,11 @@ type FcmNotification struct {
 }
 
 type FcmAndroidConfig struct {
-	Notification *FcmAndroidNotification `json:"notification"`
+	CollapseKey           string                  `json:"collapse_key"`
+	Priority              string                  `json:"priority,omitempty"`
+	TimeToLive            *string                 `json:"ttl,omitempty"`
+	RestrictedPackageName string                  `json:"restricted_package_name,omitempty"`
+	Notification          *FcmAndroidNotification `json:"notification"`
 }
 
 type FcmAndroidNotification struct {
@@ -37,7 +41,7 @@ type FcmAndroidNotification struct {
 	NotificationCount int      `json:"notification_count,omitempty"`
 }
 
-type FcmData map[string]map[string]interface{}
+type FcmData map[string]string
 
 type FcmSendHttpResponse struct {
 	Status int    `json:"-"`
