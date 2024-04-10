@@ -46,7 +46,6 @@ type FcmData map[string]string
 type FcmSendHttpResponse struct {
 	Status int    `json:"-"`
 	Name   string `json:"name"`
-	Error  string `json:"-"`
 }
 
 type InstanceInformationResponse struct {
