@@ -41,11 +41,12 @@ type FcmAndroidNotification struct {
 	NotificationCount int      `json:"notification_count,omitempty"`
 }
 
-type FcmData map[string]interface{}
+type FcmData map[string]string
 
 type FcmSendHttpResponse struct {
 	Status int    `json:"-"`
 	Name   string `json:"name"`
+	Error  string `json:"-"`
 }
 
 type InstanceInformationResponse struct {
