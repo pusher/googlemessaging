@@ -39,6 +39,7 @@ type FcmAndroidNotification struct {
 	Sticky            bool     `json:"sticky,omitempty"`
 	LocalOnly         bool     `json:"local_only,omitempty"`
 	NotificationCount int      `json:"notification_count,omitempty"`
+	ChannelId         string   `json:"channel_id,omitempty"`
 }
 
 type FcmData map[string]string
