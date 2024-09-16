@@ -82,10 +82,28 @@ func (c *fcmClient) GetInstanceInfo(token string) (*InstanceInformationResponse,
 	defer response.Body.Close()
 
 	switch response.StatusCode {
+	case 400:
+		errorResponseBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read response from google: %w", err)
+		}
+
+		errorBody := ErrorResponse{}
+		err = json.Unmarshal(errorResponseBytes, &errorBody)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read response from google: %w", err)
+		}
+
+		if errorBody.Error == "InvalidToken" {
+			return nil, ErrInvalidToken
+		}
+
+		return nil, ErrInvalidRequest
+
 	case 401, 403:
-		return nil, fmt.Errorf("invalid FCM Service Account File")
+		return nil, ErrInalidFCMServiceAccountFile
 	case 404:
-		return nil, fmt.Errorf("device not found")
+		return nil, ErrDeviceNotFound
 	}
 
 	if response.StatusCode > 299 {

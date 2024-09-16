@@ -92,7 +92,7 @@ type stubHttpClient struct {
 	Requests      []string
 }
 
-func (c *stubHttpClient) send(apiKey string, message HttpMessage) (*HttpResponse, error) {
+func (c *stubHttpClient) send(ctx context.Context, apiKey string, message HttpMessage) (*HttpResponse, error) {
 	response := &HttpResponse{}
 	err := json.Unmarshal([]byte(multicastReply[c.InvocationNum]), &response)
 	c.InvocationNum++
