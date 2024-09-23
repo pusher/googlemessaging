@@ -1,5 +1,16 @@
 package googlemessaging
 
+import (
+	"errors"
+)
+
+var (
+	ErrInvalidToken                = errors.New("invalid token")
+	ErrDeviceNotFound              = errors.New("device not found")
+	ErrInvalidRequest              = errors.New("invalid request")
+	ErrInalidFCMServiceAccountFile = errors.New("invalid fcm service account file")
+)
+
 type FcmMessageBody struct {
 	Message *FcmHttpMessage `json:"message"`
 }
@@ -51,4 +62,8 @@ type FcmSendHttpResponse struct {
 
 type InstanceInformationResponse struct {
 	AuthorizedEntity string `json:"authorizedEntity"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
